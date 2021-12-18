@@ -12,6 +12,7 @@ import styles from './post.module.scss';
 import { format, parseISO, minutesToHours } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
 interface Post {
   first_publication_date: string | null;
@@ -43,6 +44,29 @@ interface PostProps {
 
 export default function Post({ post }: PostProps) {
   const { isFallback } = useRouter();
+  const commentNodeId = 'comments';
+
+  useEffect(() => {
+    const scriptParentNode = document.getElementById(commentNodeId);
+    if (!scriptParentNode) return;
+    // docs - https://utteranc.es/
+    const script = document.createElement('script');
+    script.src = 'https://utteranc.es/client.js';
+    script.async = true;
+    script.setAttribute('repo', 'https://github.com/victorandrad/ignite-template-reactjs-criando-um-projeto-do-zero');
+    script.setAttribute('issue-term', 'pathname');
+    script.setAttribute('label', 'comment :speech_balloon:');
+    script.setAttribute('theme', 'photon-dark');
+    script.setAttribute('crossorigin', 'anonymous');
+
+
+    scriptParentNode.appendChild(script);
+
+    return () => {
+      // cleanup - remove the older script with previous theme
+      scriptParentNode.removeChild(scriptParentNode.firstChild);
+    };
+  }, [commentNodeId]);
 
   if (isFallback) {
     return <h1>Carregando...</h1>;
@@ -124,6 +148,8 @@ export default function Post({ post }: PostProps) {
               </div>
             ))}
           </section>
+
+          <div id={commentNodeId} />
         </article>
       </main>
     </>
