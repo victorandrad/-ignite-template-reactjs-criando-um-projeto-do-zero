@@ -53,7 +53,7 @@ export default function Post({ post }: PostProps) {
     const script = document.createElement('script');
     script.src = 'https://utteranc.es/client.js';
     script.async = true;
-    script.setAttribute('repo', 'https://github.com/victorandrad/ignite-template-reactjs-criando-um-projeto-do-zero');
+    script.setAttribute('repo', 'victorandrad/ignite-template-reactjs-criando-um-projeto-do-zero');
     script.setAttribute('issue-term', 'pathname');
     script.setAttribute('label', 'comment :speech_balloon:');
     script.setAttribute('theme', 'photon-dark');
@@ -148,7 +148,6 @@ export default function Post({ post }: PostProps) {
               </div>
             ))}
           </section>
-
           <div id={commentNodeId} />
         </article>
       </main>
