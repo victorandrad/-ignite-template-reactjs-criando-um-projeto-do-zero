@@ -102,3 +102,36 @@
         pointer-events: none;
     }
 }
+
+.footerContainer {
+    max-width: 720px;
+    min-height: 5rem;
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+
+    .footerContent {
+        width: 100%;
+
+        display: flex;
+        justify-content: space-between;
+
+        margin-bottom: 4rem;
+
+        div {
+            width: 12rem;
+            min-height: 100%;
+            color: var(--highlight);
+
+            span {
+                break-word: break-all;
+                text-overflow: none;
+                padding-bottom: 1rem;
+                color: var(--heading);
+            }
+        }
+    }
+}

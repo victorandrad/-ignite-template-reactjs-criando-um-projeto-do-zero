@@ -15,7 +15,9 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 interface Post {
+  uid: string;
   first_publication_date: string | null;
+  last_publication_date: string | null;
   data: {
     title: string;
     banner: {
@@ -40,33 +42,12 @@ interface Content {
 
 interface PostProps {
   post: Post;
+  before: Post;
+  next: Post;
 }
 
-export default function Post({ post }: PostProps) {
+export default function Post({ post, before, next }: PostProps) {
   const { isFallback } = useRouter();
-  const commentNodeId = 'comments';
-
-  useEffect(() => {
-    const scriptParentNode = document.getElementById(commentNodeId);
-    if (!scriptParentNode) return;
-    // docs - https://utteranc.es/
-    const script = document.createElement('script');
-    script.src = 'https://utteranc.es/client.js';
-    script.async = true;
-    script.setAttribute('repo', 'victorandrad/ignite-template-reactjs-criando-um-projeto-do-zero');
-    script.setAttribute('issue-term', 'pathname');
-    script.setAttribute('label', 'comment :speech_balloon:');
-    script.setAttribute('theme', 'photon-dark');
-    script.setAttribute('crossorigin', 'anonymous');
-
-
-    scriptParentNode.appendChild(script);
-
-    return () => {
-      // cleanup - remove the older script with previous theme
-      scriptParentNode.removeChild(scriptParentNode.firstChild);
-    };
-  }, [commentNodeId]);
 
   if (isFallback) {
     return <h1>Carregando...</h1>;
@@ -76,6 +57,9 @@ export default function Post({ post }: PostProps) {
     return format(parseISO(date), 'dd MMM yyyy', { locale: ptBR });
   }
 
+  function formatDateText(date: string) {
+    return format(parseISO(date), "'* editado em ' dd MMM yyyy', às ' HH:mm", { locale: ptBR });
+  }
 
   function calculateReadingTime(content: Content[]) {
     const getHeadingWordsPerMinutes = content.reduce((acc, currentValue) => {
@@ -107,7 +91,7 @@ export default function Post({ post }: PostProps) {
         <title>{post.data.title} | Spacetraveling</title>
       </Head>
 
-      {post.data.banner
+      {post.data.banner.url
         ? (
           <img
             className={styles.banner}
@@ -135,6 +119,18 @@ export default function Post({ post }: PostProps) {
                 {calculateReadingTime(post.data.content)}
               </span>
             </div>
+
+            {post?.last_publication_date
+              ? (
+                <div className={styles.infoContent}>
+                  <span>
+                    <i>{formatDateText(post.last_publication_date)}</i>
+                  </span>
+                </div>
+              )
+              : ''
+            }
+
           </header>
           <section className={styles.postContent}>
             {post.data.content.map(content => (
@@ -148,9 +144,57 @@ export default function Post({ post }: PostProps) {
               </div>
             ))}
           </section>
-          <div id={commentNodeId} />
         </article>
       </main>
+      <footer className={styles.footerContainer}>
+        <div className={styles.footerContent}>
+          <div>
+            {before && (
+              <>
+                <span>{before.data.title}</span>
+                <br />
+                <br />
+                <a href={`/post/${before.uid}`}>Post Anterior</a>
+              </>
+            )}
+          </div>
+          <div>
+            {next && (
+              <>
+                <span>{next.data.title}</span>
+                <br />
+                <br />
+                <a href={`/post/${next.uid}`}>Próximo post</a>
+              </>
+            )}
+          </div>
+        </div>
+        <section
+          style={{ width: '100%' }}
+          ref={element => {
+            if (!element) {
+              return;
+            }
+
+            const scriptElement = document.createElement('script');
+            scriptElement.setAttribute('src', 'https://utteranc.es/client.js');
+            scriptElement.setAttribute(
+              'repo',
+              'victorandrad/ignite-template-reactjs-criando-um-projeto-do-zero'
+            );
+            scriptElement.setAttribute('issue-term', 'pathname');
+            scriptElement.setAttribute('theme', 'github-dark');
+            scriptElement.setAttribute('crossorigin', 'anonymous');
+            scriptElement.setAttribute('async', 'true');
+            element.replaceChildren(scriptElement);
+          }}
+        />
+        {/* <div>
+          <button className={styles.outPreview} type="button">
+            Sair do modo Preview
+          </button>
+        </div> */}
+      </footer>
     </>
   );
 }
@@ -195,11 +239,39 @@ export const getStaticProps = async ({ params }) => {
     },
     uid: response.uid,
     first_publication_date: response.first_publication_date,
+    last_publication_date: response.last_publication_date,
   } as Post;
+
+  const postsResponse = await prismic.query(
+    [
+      Prismic.predicates.at('document.type', 'post')
+    ],
+    {
+      fetch: ['post.title', 'post.subtitle', 'post.author', 'post.content'],
+      pageSize: 2
+    });
+
+  let before = null;
+  let next = null;
+  let now = false;
+
+  postsResponse.results.forEach(element => {
+    if (element.uid !== response.uid && now === false) {
+      before = element;
+    }
+    if (element.uid !== response.uid && now === true) {
+      next = element;
+    }
+    if (element.uid === response.uid) {
+      now = true;
+    }
+  });
 
   return {
     props: {
-      post: postResponse
+      post: postResponse,
+      before,
+      next,
     },
     revalidate: 60 * 30
   }
